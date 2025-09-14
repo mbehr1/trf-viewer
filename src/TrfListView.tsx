@@ -93,6 +93,36 @@ export const TrfListView = (props: TrfListViewProps) => {
     // setSelected([])// selectedItems.map(item => item.id.toString())) // or only the first?
   }, [selectedItems])
 
+  // the rsuite table is really inefficient on large trees (if isTree is set) as it will internally flatten the whole tree and then filter it
+  // for the expanded items. So we do limit the items on our own upfront
+
+  const treeItems: MyRowDataType[] = useMemo(() => {
+    const getTotalChildren = (items: TrfReportItem[] | MyRowDataType[]): number => {
+      return items.reduce((acc, item) => {
+        const childrenCount = item.children ? getTotalChildren(item.children) : 0
+        return acc + 1 + childrenCount
+      }, 0)
+    }
+    console.log(
+      `TrfListView.treeItems: calculating treeItems. selectedItems.total Nr. of children=${getTotalChildren(selectedItems)} expanded=${
+        expanded.length
+      }`,
+    )
+    const getItemWoChildIfNotExpanded = (item: TrfReportItem): TrfReportItem => {
+      const itemIsExpanded = expanded.includes(item.id)
+      return itemIsExpanded
+        ? { ...item, children: item.children ? item.children.map(getItemWoChildIfNotExpanded) : [] }
+        : { ...item, children: item.children ? [{ ...item.children[0], children: [] }] : [] } // need to include one child so that the + sign is shown
+    }
+
+    // we want to include the item and
+    // if the item is expanded: all children
+    // if the item is not expanded: no children (or 1 so that the + sign is shown?)
+    const toRet = selectedItems.map((item) => ({ ...item, children: item.children ? item.children.map(getItemWoChildIfNotExpanded) : [] }))
+    console.log(`TrfListView.treeItems: reduced to ${getTotalChildren(toRet)} items`)
+    return toRet
+  }, [selectedItems, expanded])
+
   const onExpandChange = useCallback((isOpen: boolean, rowData: MyRowDataType) => {
     // console.log(`TrfListView.onExpandChange(isOpen=${isOpen}, item.id=${rowData.id})`)
     if (isOpen) {
@@ -311,7 +341,7 @@ export const TrfListView = (props: TrfListViewProps) => {
         fillHeight
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        data={selectedItems}
+        data={treeItems}
         expandedRowKeys={expanded}
         /** shouldUpdateScroll: whether to update the scroll bar after data update **/
         shouldUpdateScroll={false}
