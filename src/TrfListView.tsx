@@ -97,17 +97,6 @@ export const TrfListView = (props: TrfListViewProps) => {
   // for the expanded items. So we do limit the items on our own upfront
 
   const treeItems: MyRowDataType[] = useMemo(() => {
-    const getTotalChildren = (items: TrfReportItem[] | MyRowDataType[]): number => {
-      return items.reduce((acc, item) => {
-        const childrenCount = item.children ? getTotalChildren(item.children) : 0
-        return acc + 1 + childrenCount
-      }, 0)
-    }
-    console.log(
-      `TrfListView.treeItems: calculating treeItems. selectedItems.total Nr. of children=${getTotalChildren(selectedItems)} expanded=${
-        expanded.length
-      }`,
-    )
     const getItemWoChildIfNotExpanded = (item: TrfReportItem): TrfReportItem => {
       const itemIsExpanded = expanded.includes(item.id)
       return itemIsExpanded
@@ -119,7 +108,6 @@ export const TrfListView = (props: TrfListViewProps) => {
     // if the item is expanded: all children
     // if the item is not expanded: no children (or 1 so that the + sign is shown?)
     const toRet = selectedItems.map((item) => ({ ...item, children: item.children ? item.children.map(getItemWoChildIfNotExpanded) : [] }))
-    console.log(`TrfListView.treeItems: reduced to ${getTotalChildren(toRet)} items`)
     return toRet
   }, [selectedItems, expanded])
 
