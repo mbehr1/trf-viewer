@@ -134,7 +134,8 @@ export class DeferredZipFile {
     const filesFromZip = zipFileEntries.filter((e) => !e.directory && entries.includes(e.filename))
     const unzippedFromZipAsFiles: File[] = []
     for (const fi of filesFromZip) {
-      const bits = await fi.getData?.(new zipjs.BlobWriter())
+      const bits =
+        !fi.directory && 'getData' in fi && typeof fi.getData === 'function' ? await fi.getData(new zipjs.BlobWriter()) : undefined
       if (bits) {
         unzippedFromZipAsFiles.push(new File([bits], fi.filename, { type: 'text/xml', lastModified: fi.lastModDate.valueOf() }))
       }

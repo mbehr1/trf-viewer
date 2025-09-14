@@ -116,7 +116,7 @@ function App() {
           })
           // unzip those:
           for (const fi of trfFilesFromZipJs) {
-            if (fi.getData) {
+            if (!fi.directory && 'getData' in fi && typeof fi.getData === 'function') {
               const bits = await fi.getData(new zipjs.BlobWriter())
               const trfFile = new File([bits], fi.filename, { type: 'text/xml', lastModified: fi.lastModDate.valueOf() })
               posTrfFiles.push({ file: trfFile, deferredZipFile: new DeferredZipFile(file, zipFileEntries) })
